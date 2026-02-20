@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MSR Intro</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        margin: 0;
+        background: black;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: 'Montserrat', sans-serif;
+        color: white;
+    }
+
+    #start-btn {
+        padding: 15px 30px;
+        font-size: 18px;
+        background: transparent;
+        color: white;
+        border: 1px solid white;
+        cursor: pointer;
+        font-family: 'Montserrat', sans-serif;
+        letter-spacing: 2px;
+        z-index: 100;
+        transition: 0.3s;
+    }
+    #start-btn:hover { background: white; color: black; }
+
+    #text-stack {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .story-line {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, 100vh); 
+        opacity: 0;
+        transition: opacity 1.5s ease, transform 3.5s cubic-bezier(0.1, 0.5, 0.1, 1);
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        line-height: 1.4;
+        width: 100%;
+        text-align: center;
+    }
+
+    .line-locked { 
+        opacity: 1; 
+        transform: translate(-50%, 0); 
+    }
+
+    #m-center {
+        position: absolute;
+        font-size: 28px;
+        text-align: center;
+        width: 80%;
+        line-height: 1.8;
+        letter-spacing: 4px;
+        white-space: pre-line;
+        opacity: 0;
+        text-transform: uppercase;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        transition: opacity 1.2s ease, transform 1.2s ease;
+        transform: scale(0.95);
+        pointer-events: none;
+    }
+
+    .show-text { opacity: 1 !important; transform: scale(1) !important; }
+
+    .blast-out {
+        opacity: 0 !important;
+        transform: scale(4) !important;
+        filter: blur(10px);
+        transition: all 0.6s ease-out !important;
+    }
+
+    .star-letter {
+        position: absolute;
+        font-size: 18px;
+        opacity: 0;
+        transition: all 2.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        pointer-events: none;
+        white-space: pre;
+        font-family: 'Times New Roman', Times, serif;
+    }
+
+    .joining { opacity: 1; z-index: 20; }
+
+    .m-piece {
+        position: absolute;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 28px;
+        color: white;
+        transform-origin: center;
+    }
+
+    .snow {
+        position: absolute;
+        bottom: -20px;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.5;
+        animation: rise linear forwards;
+    }
+
+    @keyframes rise {
+        0% { transform: translateY(0); opacity: 0.5; }
+        100% { transform: translateY(-110vh); opacity: 0; }
+    }
+</style>
+</head>
+<body>
+
+<button id="start-btn">ENTER EXPERIENCE</button>
+<div id="text-stack"></div>
+<div id="m-center">M</div>
+
+<script>
+    const center = document.getElementById("m-center");
+    const stack = document.getElementById("text-stack");
+    const startBtn = document.getElementById("start-btn");
+    const directions = [0, 45, 90, 135, 180, 225, 270, 315, 360];
+    const places = ["Mangaluru", "Moodbidri", "Malpe Beach", "Mysuru", "Mandya"];
+    
+    const audio = new Audio();
+    audio.src = "music/YOUR_MUSIC_FILE.mp3"; 
+    audio.loop = true;
+
+    // --- FIX 1: SMOOTH AUDIO FADE OUT ---
+    let isFading = false;
+    audio.addEventListener('timeupdate', function() {
+        if (this.currentTime >= 91 && !isFading) {
+            isFading = true;
+            const fadeInterval = setInterval(() => {
+                if (audio.volume > 0.05) {
+                    audio.volume -= 0.05;
+                } else {
+                    audio.volume = 0;
+                    audio.pause();
+                    clearInterval(fadeInterval);
+                }
+            }, 250); 
+        }
+    });
+
+    startBtn.addEventListener('click', () => {
+        startBtn.style.display = 'none';
+        audio.play();
+        initAnimation();
+    });
+
+    function initAnimation() {
+        setTimeout(() => { center.classList.add('show-text'); }, 500);
+        setTimeout(() => { scatterM(); }, 2500);
+    }
+
+    function scatterM() {
+        center.classList.remove('show-text');
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        directions.forEach(angle => {
+            const m = document.createElement("div");
+            m.className = "m-piece";
+            m.innerText = "M";
+            m.style.left = centerX + "px";
+            m.style.top = centerY + "px";
+            document.body.appendChild(m);
+            animatePiece(m, angle);
+        });
+    }
+
+    function animatePiece(piece, angle) {
+        const rad = angle * Math.PI / 180;
+        const dx = Math.cos(rad) * (window.innerWidth / 2 - 100);
+        const dy = Math.sin(rad) * (window.innerHeight / 2 - 100);
+        piece.animate([{ transform: "translate(-50%,-50%) rotate(0deg)" }, { transform: `translate(${dx}px,${dy}px) rotate(720deg)` }], { duration: 1200, easing: "ease-out", fill: "forwards" });
+        setTimeout(() => { piece.animate([{ transform: `translate(${dx}px,${dy}px) rotate(720deg)` }, { transform: "translate(-50%,-50%) rotate(0deg)" }], { duration: 1200, easing: "ease-in", fill: "forwards" }); }, 1800);
+        setTimeout(() => { piece.remove(); if(!document.querySelector('.m-piece')) showPlaces(); }, 3200);
+    }
+
+    function showPlaces() {
+        let i = 0;
+        center.style.fontSize = "30px";
+        function nextPlace() {
+            if (i >= places.length) { center.classList.remove('show-text'); setTimeout(runStory, 1200); return; }
+            center.innerText = places[i];
+            center.classList.add('show-text');
+            setTimeout(() => { center.classList.remove('show-text'); }, 800);
+            i++;
+            setTimeout(nextPlace, 1500);
+        }
+        nextPlace();
+    }
+
+    async function displayBlock(text, duration) {
+        center.innerText = text;
+        center.classList.add('show-text');
+        await new Promise(r => setTimeout(r, duration));
+        center.classList.remove('show-text');
+        await new Promise(r => setTimeout(r, 1200));
+    }
+
+    async function addLine(text, yPos) {
+        const line = document.createElement("div");
+        line.className = "story-line";
+        line.innerText = text;
+        line.style.top = yPos + "px";
+        stack.appendChild(line);
+        await new Promise(r => setTimeout(r, 100));
+        line.classList.add("line-locked");
+        await new Promise(r => setTimeout(r, 2800)); 
+    }
+
+    async function runStory() {
+        center.style.fontSize = "22px";
+        await displayBlock("Life is all about sudden goodbyes,\nHandle it with care", 3000);
+        await displayBlock("Friendship is not a moment —\nit’s a memory forever.", 3000);
+
+        center.innerText = "MSR";
+        center.style.fontSize = "50px";
+        center.classList.add('show-text');
+        await new Promise(r => setTimeout(r, 1500));
+        center.classList.add('blast-out');
+        await new Promise(r => setTimeout(r, 600));
+        center.classList.remove('show-text', 'blast-out');
+        await new Promise(r => setTimeout(r, 800));
+
+        // --- FIX 2: RESTORED STAR SCATTER LOGIC ---
+        const finalTitle = "MOMENTS SHARED FOREVER";
+        const chars = finalTitle.split("");
+        const totalFakeStars = 70;
+        const starContainer = [];
+
+        chars.forEach((char, i) => {
+            const span = document.createElement("div");
+            span.className = "star-letter joining";
+            span.innerText = char === " " ? "\u00A0" : char;
+            span.style.left = Math.random() * 100 + "vw";
+            span.style.top = Math.random() * 100 + "vh";
+            span.style.transform = `rotate(${Math.random() * 360}deg)`;
+            document.body.appendChild(span);
+            starContainer.push({ el: span, isReal: true, index: i });
+        });
+
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for(let i=0; i<totalFakeStars; i++) {
+            const fake = document.createElement("div");
+            fake.className = "star-letter";
+            fake.innerText = alphabet[Math.floor(Math.random() * alphabet.length)];
+            fake.style.left = Math.random() * 100 + "vw";
+            fake.style.top = Math.random() * 100 + "vh";
+            document.body.appendChild(fake);
+            setTimeout(() => { fake.style.opacity = "0.3"; }, 10);
+            starContainer.push({ el: fake, isReal: false });
+        }
+
+        await new Promise(r => setTimeout(r, 1500)); // Time for them to scatter
+
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const charWidth = 28;
+
+        starContainer.forEach(item => {
+            if (item.isReal) {
+                const totalWidth = chars.length * charWidth;
+                const finalX = (centerX - totalWidth / 2) + (item.index * charWidth);
+                item.el.style.left = finalX + "px";
+                item.el.style.top = centerY + "px";
+                item.el.style.transform = "rotate(0deg) scale(1.4)";
+                item.el.style.fontSize = "26px";
+                item.el.style.opacity = "1";
+            } else {
+                item.el.style.opacity = "0";
+                setTimeout(() => item.el.remove(), 2500);
+            }
+        });
+
+        await new Promise(r => setTimeout(r, 3500));
+
+        // Final Title Blink
+        for(let j=0; j<2; j++) {
+            starContainer.filter(i=>i.isReal).forEach(i=> i.el.style.opacity = "0");
+            await new Promise(r => setTimeout(r, 200));
+            starContainer.filter(i=>i.isReal).forEach(i=> i.el.style.opacity = "1");
+            await new Promise(r => setTimeout(r, 200));
+        }
+
+        await new Promise(r => setTimeout(r, 2000));
+        
+        starContainer.filter(i=>i.isReal).forEach(i=> {
+            i.el.style.opacity = "0";
+            setTimeout(() => i.el.remove(), 1000);
+        });
+
+        await new Promise(r => setTimeout(r, 1200)); 
+
+        startSnow();
+        
+        const startY = (window.innerHeight / 2) - 200; 
+        const step = 32; 
+
+        await addLine("This was just a glimpse of what's coming...", startY);
+        await addLine("This is not a video filter or a mobile edit.", startY + step);
+        await addLine("Every movement is powered by pure logic.", startY + (step * 2));
+        await addLine("Built with lines of HTML, CSS, and JavaScript.", startY + (step * 3));
+        await addLine("Soon, your name will become the key.", startY + (step * 4));
+        await addLine("Unlocking a personalized vault of our history.", startY + (step * 5));
+        await addLine("Powered by a Node.js engine and MongoDB universe.", startY + (step * 6));
+        await addLine("A space where your stories are preserved in real time.", startY + (step * 7));
+        await addLine("MSR EXPERIENCE", startY + (step * 8));
+        await addLine("BUILT WITH CODE. KEPT WITH LOVE.", startY + (step * 9));
+        await addLine("LAUNCHING SOON.", startY + (step * 10));
+        await addLine("To be continued.... stay tuned....", startY + (step * 11));
+    }
+
+    function startSnow() {
+        setInterval(() => {
+            const flake = document.createElement("div");
+            flake.className = "snow";
+            const size = Math.random() * 3 + 2 + "px";
+            flake.style.width = size; flake.style.height = size;
+            flake.style.left = Math.random() * 100 + "vw";
+            flake.style.animationDuration = Math.random() * 4 + 3 + "s";
+            document.body.appendChild(flake);
+            setTimeout(() => flake.remove(), 7000);
+        }, 150);
+    }
+</script>
+</body>
+</html>
